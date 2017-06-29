@@ -1,0 +1,143 @@
+#!/bin/bash
+
+Data_Directory=/data/volume/nfs/docker-data/dstat2graph/data
+HostListFile=hostlist
+HostName=$(hostname -s)
+Date=$(date +%Y-%m-%d)
+
+function print_help()
+{
+	echo $0 " [Command]"
+	echo "System Resource collected using dstat"
+	echo ""
+	echo ""
+	echo " [Command] "
+	echo " run 	running dstat"
+	echo " merge	merge dstat csv file"
+	echo ""
+	echo "usage example)"
+	echo $0 "run"
+	echo $0 "merge"
+}
+
+function exception_check()
+{
+	if [ $? -eq 0 ]
+	then
+		echo "done"
+	else
+		echo "above task return code "$?
+		echo "something wrong"
+		exit 1
+	fi
+}
+
+function check_and_install ()
+{
+	rpm_path=$(type -p rpm)
+	dpkg_path=$(type -p dpkg)
+
+	if [ -e "$rpm_path" ]
+	then
+		yum -y install dstat
+		exception_check
+	elif [ -e $dpkg_path ]
+	then
+		apt-get install -y dstat
+		exception_check
+	else
+		echo "Con't find dstat package"
+	fi
+}
+
+function run ()
+{
+	if [ $(grep $HostName $Data_Directory/$HostListFile | wc -l) -eq "0" ]
+	then
+		echo "Add "$HostName" to "$HostListFile
+		echo $HostName >> $Data_Directory/$HostListFile
+	fi
+	if [ $(ps -ef | grep -v grep | grep "/usr/bin/python /usr/bin/dstat" |wc -l) -eq 0 ]
+	then
+		if [ -f $Data_Directory/$HostName-$Date.csv ]
+		then
+			filecount=$(ls -alh $Data_Directory| grep $HostName-$Date.csv | wc -l)
+			if [[ $(ls -alh $Data_Directory| grep $HostName-$Data.csv | wc -l) = [0-9] ]]
+			then
+				filecount=0$filecount
+			fi
+			echo $Data_Directory/$HostName-$Date.csv" file exists"
+			echo $Data_Directory/$HostName-$Date.csv" has been moved to "$Data_Directory/$HostName-$Date.csv.$filecount
+			mv $Data_Directory/$HostName-$Date.csv $Data_Directory/$HostName-$Date.csv.$filecount
+			exception_check
+		fi
+		dstat --time -v --net --output $Data_Directory/$HostName-$Date.csv > /dev/null &
+	else
+		echo "dstat already running. check the dstat process."
+		ps -ef | grep -v grep | grep "/usr/bin/python /usr/bin/dstat"
+	fi
+}
+
+
+function merge ()
+{
+        if [ $(ps -ef | grep -v grep | grep "/usr/bin/python /usr/bin/dstat" |wc -l) -ne 0 ]
+	then
+		echo "dstat already running. check the dstat process."
+		echo "can not be merge to dstat process running"
+		ps -ef | grep -v grep | grep "/usr/bin/python /usr/bin/dstat"
+		exit 0;
+	fi
+
+	if [ -f $Data_Directory/$HostName-$Date.csv.temp ]
+	then
+		if [ "$(md5sum $Data_Directory/$HostName-$Date.csv | awk '{print $1}')" == "$(md5sum $Data_Directory/$HostName-$Date.csv.temp | awk '{print $1}')" ]
+		then
+			echo $Data_Directory/$HostName-$Date.csv" file already merged"
+			exit 0;
+		else
+			rm -rf $Data_Directory/$HostName-$Date.csv.temp
+			exception_check
+		fi
+
+	fi
+	echo $Data_Directory"/"$HostName-$Date".csv file move to "$Data_Directory"/"$HostName-$Date".csv.00"
+	mv $Data_Directory/$HostName-$Date.csv $Data_Directory/$HostName-$Date.csv.00
+	exception_check
+
+	echo $Data_Directory/$HostName-$Date.csv.00" file merged"
+	cat $Data_Directory/$HostName-$Date.csv.00 | sed "/^\s*$/d" >> $Data_Directory/$HostName-$Date.csv.temp
+	exception_check
+	filecount=$(ls -alh $Data_Directory | grep $HostName-$Date.csv.'[00-99]' | grep -v grep | wc -l)
+	let filecount=$filecount-1
+	echo "found "$filecount " files"
+	for i in $(seq 1 $filecount)
+	do
+		if [[ $i = [0-9] ]]
+		then
+			i=0$i
+		fi
+		echo $Data_Directory/$HostName-$Date.csv.$i" file merged"
+		cat $Data_Directory/$HostName-$Date.csv.$i | sed "/\"/d" | sed "/^\s*$/d" >> $Data_Directory/$HostName-$Date.csv.temp
+		exception_check
+	done
+	cat $Data_Directory/$HostName-$Date.csv.temp > $Data_Directory/$HostName-$Date.csv
+	exception_check
+}
+
+
+case $1 in
+	run)
+		if [ ! -e $(type -p dstat) ]
+		then
+			check_and_install
+		fi
+		run
+	;;
+	merge)
+		merge
+	;;
+	*)
+		print_help
+	;;
+esac

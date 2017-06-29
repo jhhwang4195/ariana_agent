@@ -9,10 +9,12 @@ function print_help()
 {
 	echo $0 " [Command]"
 	echo "System Resource collected using dstat"
+	echo "This agnet working for Ubuntu/Debian or RHEL/CentOS"
 	echo ""
 	echo ""
 	echo " [Command] "
 	echo " run 	running dstat"
+	echo " stop 	stopping dstat"
 	echo " merge	merge dstat csv file"
 	echo ""
 	echo "usage example)"
@@ -125,6 +127,15 @@ function merge ()
 	exception_check
 }
 
+function stop ()
+{
+	pid=$(ps -ef | grep -v grep | grep "/usr/bin/python /usr/bin/dstat" | awk '{print $2}')
+	echo "dstat running pid "$pid
+	echo "Try stop dstat"
+	kill -9 $pid
+	exception_check
+}
+
 
 case $1 in
 	run)
@@ -136,6 +147,9 @@ case $1 in
 	;;
 	merge)
 		merge
+	;;
+	stop)
+		stop
 	;;
 	*)
 		print_help

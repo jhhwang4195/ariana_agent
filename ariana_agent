@@ -152,7 +152,7 @@ function status ()
 		echo "dstat running pid "$pid
 		ps -ef | grep -v grep | grep $dstat_path | awk -F--output '{printf "Dstat logging is "$2"\n"}'
 		echo "today's log files is "
-		ls -alh $Data_Direct | grep $HostName-$Date.csv | awk '{printf "Log file "$9" size is "$5"\n"}'
+		ls -alh $Data_Directory | grep $HostName-$Date.csv | awk '{printf "Log file "$9" size is "$5"\n"}'
 	else
 		echo "dstat doesn't running"
 		exit 1

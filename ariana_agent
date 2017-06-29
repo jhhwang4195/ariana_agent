@@ -155,6 +155,7 @@ function status ()
 		ls -alh $Data_Direct | grep $HostName-$Date.csv | awk '{printf "Log file "$9" size is "$5"\n"}'
 	else
 		echo "dstat doesn't running"
+		exit 1
 	fi
 }
 

@@ -70,7 +70,7 @@ function print_help()
 	echo $0 " -n 2017-07-01 merge"
 }
 
-function exception_check($1)
+function exception_check()
 {
 	if [ $? -eq 0 ]
 	then

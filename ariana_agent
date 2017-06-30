@@ -164,6 +164,8 @@ function running_check ()
 
 function merge ()
 {
+	# csv file count
+	filecount=$(ls -alh $Data_Directory | grep $HostName-$Date.csv.'[00-99]' | wc -l)
 	# check for dstat proccess before merge. 
         if [ $(ps -ef | grep -v grep | grep $dstat_path |wc -l) -ne 0 ]
 	then
@@ -172,20 +174,13 @@ function merge ()
 		ps -ef | grep -v grep | grep "$dstat_path"
 		exit 0;
 	fi
-
-	# check temp file and compare md5sum result for temp and csv file
-	if [ -f $Data_Directory/$HostName-$Date.csv.temp ]
+	
+	if [ $filecount -eq 0 ]
 	then
-		if [ "$(md5sum $Data_Directory/$HostName-$Date.csv | awk '{print $1}')" == "$(md5sum $Data_Directory/$HostName-$Date.csv.temp | awk '{print $1}')" ]
-		then
-			echo $Data_Directory/$HostName-$Date.csv" file already merged"
-			exit 0;
-		else
-			rm -rf $Data_Directory/$HostName-$Date.csv.temp
-			exception_check
-		fi
-
+		echo "no need to merge"
+		exit 0;
 	fi
+
 	echo $Data_Directory"/"$HostName-$Date".csv file move to "$Data_Directory"/"$HostName-$Date".csv.00"
 	##### csv file formatting check start #####
 	# remake csv header 
@@ -201,8 +196,6 @@ function merge ()
 	echo $Data_Directory/$HostName-$Date.csv.00" file merged"
 	cat $Data_Directory/$HostName-$Date.csv.00 | sed "/^\s*$/d" >> $Data_Directory/$HostName-$Date.csv.temp
 	exception_check
-	# csv file count
-	filecount=$(ls -alh $Data_Directory | grep $HostName-$Date.csv.'[00-99]' | wc -l)
 	# except csv.00 for count 
 	let filecount=$filecount-1
 	echo "found "$filecount " files"
@@ -218,7 +211,10 @@ function merge ()
 		exception_check
 	done
 	# move to temp file to csv
-	cat $Data_Directory/$HostName-$Date.csv.temp > $Data_Directory/$HostName-$Date.csv
+	mv $Data_Directory/$HostName-$Date.csv.temp $Data_Directory/$HostName-$Date.csv
+	exception_check
+	# remove to csv.00 files
+	rm -rf $Data_Directory/$HostName-$Date.csv.
 	exception_check
 	##### csv file merge end #####
 }

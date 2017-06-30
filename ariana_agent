@@ -7,12 +7,13 @@
 while getopts "d:" opt
 do
 	case $opt in
-		n)
-			if [[ $OPTARG =~ ^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$  ]]
+		d)
+			if [[ $OPTARG =~ ^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$  ]]
                         then
                                 Date=$OPTARG
 			else
-				print_help
+				echo $OPTARG
+				echo "some paramater mismatch" 
 				exit 1
                         fi
 		;;
@@ -39,7 +40,7 @@ function print_help()
 	echo "This agnet working for Ubuntu/Debian or RHEL/CentOS"
 	echo ""
 	echo " [option] "
-	echo "  -n 	define date for merge command. default option is today date"
+	echo "  -d 	define date for merge command. default option is today date"
 	echo ""
 	echo " [Command] "
 	echo " run 	running dstat"

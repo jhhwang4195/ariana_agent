@@ -33,6 +33,20 @@ fi
 dstat_path=$(type -p dstat)
 python_path=$(type -p python)
 
+function update ()
+{
+	curl -w ' [:: %{size_download} byte has been downloaded ::]\n' -L -# https://raw.githubusercontent.com/code-post/ariana_agent/master/ariana_agent -o /tmp/ariana_agent;
+	exception_check
+	chmod +x /tmp/ariana_agent 
+	exception_check
+	mv -f /tmp/ariana_agent /usr/loca/bin/ariana_agent
+	exception_check
+	echo "update done"
+}
+	
+
+
+
 function print_help()
 {
 	echo $0 " [Command]"
@@ -47,6 +61,7 @@ function print_help()
 	echo " stop 	stopping dstat"
 	echo " merge	merge dstat csv file"
 	echo " status	show running dstat status"
+	echo " update	ariana agent self update"
 	echo ""
 	echo "usage example)"
 	echo $0 "run"
@@ -229,20 +244,32 @@ function status ()
 
 case $command in
 	run)
-		if [ ! -e $(type -p dstat) ]
+		if [ -n $(type -p dstat) ]
 		then
 			check_and_install
 		fi
 		run
 	;;
 	merge)
+		if [ -n $(type -p dstat) ]
+		then
+			check_and_install
+		fi
 		merge
 	;;
 	status)
+		if [ -n $(type -p dstat) ]
+		then
+			check_and_install
+		fi
 		status
 	;;
 	stop)
 		stop
+	;;
+	udpate)
+		update
+
 	;;
 	*)
 		print_help

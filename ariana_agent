@@ -37,11 +37,11 @@ ariana_agent_path=/usr/local/bin/ariana_agent
 function update ()
 {
 	curl -w ' [:: %{size_download} byte has been downloaded ::]\n' -L -# https://raw.githubusercontent.com/code-post/ariana_agent/master/ariana_agent -o /tmp/ariana_agent
-	exception_check
+	exception_check quiet
 	chmod +x /tmp/ariana_agent 
-	exception_check
+	exception_check quiet
 	mv -f /tmp/ariana_agent $ariana_agent_path
-	exception_check
+	exception_check quiet
 	echo "update done"
 }
 	
@@ -74,7 +74,10 @@ function exception_check()
 {
 	if [ $? -eq 0 ]
 	then
-		echo "done"
+		if [ $1 != "quiet"]
+		then
+			echo "done"
+		fi
 	else
 		echo "above task return code "$?
 		echo "something wrong"

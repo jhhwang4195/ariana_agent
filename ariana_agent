@@ -1,9 +1,34 @@
 #!/bin/bash
 
+# This Agent collect dstat data for csv
+# jaekwon.park@code-post.com
+# https://github.com/code-post/ariana_agent
+
+while getopts "d:" opt
+do
+	case $opt in
+		n)
+			if [[ $OPTARG =~ ^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$  ]]
+                        then
+                                Date=$OPTARG
+			else
+				print_help
+				exit 1
+                        fi
+		;;
+	esac
+done
+shift $(( $OPTIND  -1 ))
+command=$1
+			
+
 Data_Directory=/var/log/dstat
 HostListFile=hostlist
 HostName=$(hostname -s)
-Date=$(date +%Y-%m-%d)
+if [ -z $Date ]
+then
+	Date=$(date +%Y-%m-%d)
+fi
 dstat_path=$(type -p dstat)
 python_path=$(type -p python)
 
@@ -13,15 +38,19 @@ function print_help()
 	echo "System Resource collected using dstat"
 	echo "This agnet working for Ubuntu/Debian or RHEL/CentOS"
 	echo ""
+	echo " [option] "
+	echo "  -n 	define date for merge command. default option is today date"
 	echo ""
 	echo " [Command] "
 	echo " run 	running dstat"
 	echo " stop 	stopping dstat"
 	echo " merge	merge dstat csv file"
+	echo " status	show running dstat status"
 	echo ""
 	echo "usage example)"
 	echo $0 "run"
 	echo $0 "merge"
+	echo $0 " -n 2017-07-01 merge"
 }
 
 function exception_check()
@@ -56,20 +85,26 @@ function check_and_install ()
 
 function run ()
 {
+	# add hostname to hostlist file
 	if [ $(grep $HostName $Data_Directory/$HostListFile | wc -l) -eq "0" ]
 	then
 		echo "Add "$HostName" to "$HostListFile
 		echo $HostName >> $Data_Directory/$HostListFile
 	fi
+	# dstat running check
 	if [ $(ps -ef | grep -v grep | grep $dstat_path |wc -l) -eq 0 ]
 	then
+		# csv file check
 		if [ -f $Data_Directory/$HostName-$Date.csv ]
 		then
+			# csv file count
 			filecount=$(ls -alh $Data_Directory| grep $HostName-$Date.csv | wc -l)
+			# change for matting single number for dual number [0-9] -> [00-99]
 			if [[ $(ls -alh $Data_Directory| grep $HostName-$Data.csv | wc -l) = [0-9] ]]
 			then
 				filecount=0$filecount
 			fi
+			# move exist csv file to csv.[00-99]
 			echo $Data_Directory/$HostName-$Date.csv" file exists"
 			echo $Data_Directory/$HostName-$Date.csv" has been moved to "$Data_Directory/$HostName-$Date.csv.$filecount
 			mv $Data_Directory/$HostName-$Date.csv $Data_Directory/$HostName-$Date.csv.$filecount
@@ -77,22 +112,40 @@ function run ()
 		fi
 		dstat --time -v --net --output $Data_Directory/$HostName-$Date.csv > /dev/null &
 	else
-		echo "dstat already running. check the dstat process."
-		ps -ef | grep -v grep | grep "/usr/bin/python /usr/bin/dstat"
+		running_check
 	fi
+}
+
+function running_check ()
+{
+	# compare dstat csv file date 
+	if [ "$Date" != "$(ps -ef | grep -v grep | grep $dstat_path | awk '{print $NF}' | awk -F- '{print $2"-"$3"-"$4}' | awk -F. '{print $1}')" ]
+        then
+        	echo "dstat collected old date. rerunning"
+                echo $Date
+                echo $(ps -ef | grep -v grep | grep $dstat_path | awk '{print $NF}' | awk -F- '{print $2"-"$3"-"$4}' | awk -F. '{print $1}')
+                stop
+		run
+        else
+                echo "dstat already running. check the dstat process."
+                ps -ef | grep -v grep | grep "$dstat_path"
+        fi
+
 }
 
 
 function merge ()
 {
+	# check for dstat proccess before merge. 
         if [ $(ps -ef | grep -v grep | grep $dstat_path |wc -l) -ne 0 ]
 	then
 		echo "dstat already running. check the dstat process."
 		echo "can not be merge to dstat process running"
-		ps -ef | grep -v grep | grep "/usr/bin/python /usr/bin/dstat"
+		ps -ef | grep -v grep | grep "$dstat_path"
 		exit 0;
 	fi
 
+	# check temp file and compare md5sum result for temp and csv file
 	if [ -f $Data_Directory/$HostName-$Date.csv.temp ]
 	then
 		if [ "$(md5sum $Data_Directory/$HostName-$Date.csv | awk '{print $1}')" == "$(md5sum $Data_Directory/$HostName-$Date.csv.temp | awk '{print $1}')" ]
@@ -106,15 +159,26 @@ function merge ()
 
 	fi
 	echo $Data_Directory"/"$HostName-$Date".csv file move to "$Data_Directory"/"$HostName-$Date".csv.00"
-	mv $Data_Directory/$HostName-$Date.csv $Data_Directory/$HostName-$Date.csv.00
+	##### csv file formatting check start #####
+	# remake csv header 
+	head -n 7 $Data_Directory/$HostName-$Date.csv > $Data_Directory/$HostName-$Date.csv.00
 	exception_check
+	# move to data except head and blank line
+	cat $Data_Directory/$HostName-$Date.csv | sed "/\"/d" | sed "/^\s*$/d" >> $Data_Directory/$HostName-$Date.csv.00	
+	exception_check
+	##### csv file formatting check end #####
 
+	##### csv file merge start #####
+	# first csv file merge 
 	echo $Data_Directory/$HostName-$Date.csv.00" file merged"
 	cat $Data_Directory/$HostName-$Date.csv.00 | sed "/^\s*$/d" >> $Data_Directory/$HostName-$Date.csv.temp
 	exception_check
-	filecount=$(ls -alh $Data_Directory | grep $HostName-$Date.csv.'[00-99]' | grep -v grep | wc -l)
+	# csv file count
+	filecount=$(ls -alh $Data_Directory | grep $HostName-$Date.csv.'[00-99]' | wc -l)
+	# except csv.00 for count 
 	let filecount=$filecount-1
 	echo "found "$filecount " files"
+	# merge all count csv file
 	for i in $(seq 1 $filecount)
 	do
 		if [[ $i = [0-9] ]]
@@ -125,8 +189,10 @@ function merge ()
 		cat $Data_Directory/$HostName-$Date.csv.$i | sed "/\"/d" | sed "/^\s*$/d" >> $Data_Directory/$HostName-$Date.csv.temp
 		exception_check
 	done
+	# move to temp file to csv
 	cat $Data_Directory/$HostName-$Date.csv.temp > $Data_Directory/$HostName-$Date.csv
 	exception_check
+	##### csv file merge end #####
 }
 
 function stop ()
@@ -160,7 +226,7 @@ function status ()
 }
 
 
-case $1 in
+case $command in
 	run)
 		if [ ! -e $(type -p dstat) ]
 		then

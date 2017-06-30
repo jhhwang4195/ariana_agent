@@ -180,6 +180,19 @@ function merge ()
 		echo "no need to merge"
 		exit 0;
 	fi
+	
+	if [ -f $Data_Directory/$HostName-$Date.csv.temp ]		
+  	then
+		if [ "$(md5sum $Data_Directory/$HostName-$Date.csv | awk '{print $1}')" == "$(md5sum $Data_Directory/$HostName-$Date.csv.temp | awk '{print $1}')" ]
+		then
+			echo $Data_Directory/$HostName-$Date.csv" file already merged"		
+			exit 0;		
+		else		
+			rm -rf $Data_Directory/$HostName-$Date.csv.temp		
+			exception_check		
+		fi		
+		
+  	fi
 
 	echo $Data_Directory"/"$HostName-$Date".csv file move to "$Data_Directory"/"$HostName-$Date".csv.00"
 	##### csv file formatting check start #####
@@ -214,8 +227,16 @@ function merge ()
 	mv $Data_Directory/$HostName-$Date.csv.temp $Data_Directory/$HostName-$Date.csv
 	exception_check
 	# remove to csv.00 files
-	rm -rf $Data_Directory/$HostName-$Date.csv.
-	exception_check
+	for i in $(seq 1 $filecount)
+	do
+		if [[ $i = [0-9] ]]
+		then
+			i=0$i
+		fi
+		echo $Data_Directory/$HostName-$Date.csv.$i" file be deleted"
+		rm -rf  $Data_Directory/$HostName-$Date.csv.$i
+		exception_check
+	done
 	##### csv file merge end #####
 }
 

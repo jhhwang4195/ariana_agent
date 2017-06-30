@@ -22,16 +22,16 @@ done
 shift $(( $OPTIND  -1 ))
 command=$1
 			
-if [ -f /etc/ariana/config ]
+if [ ! -e /etc/ariana/config ]
 then
 	mkdir -p /etc/ariana
-	echo "Data_Directory=/var/log/dstat" > config
-	echo "HostListFile=hostlist" >> config
-	echo "ariana_agent_path=/usr/local/bin/ariana_agent" >> config
-	echo "Download_url=https://raw.githubusercontent.com/code-post/ariana_agent/master/ariana_agent" >> config
-else
-	source /etc/ariana/config
+	echo "Data_Directory=/var/log/dstat" > /etc/ariana/config
+	echo "HostListFile=hostlist" >> /etc/ariana/config
+	echo "ariana_agent_path=/usr/local/bin/ariana_agent" >> /etc/ariana/config
+	echo "Download_url=https://raw.githubusercontent.com/code-post/ariana_agent/master/ariana_agent" >> /etc/ariana/config
 fi
+
+source /etc/ariana/config
 
 HostName=$(hostname -s)
 if [ -z $Date ]

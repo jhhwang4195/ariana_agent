@@ -22,18 +22,24 @@ done
 shift $(( $OPTIND  -1 ))
 command=$1
 			
+if [ -f /etc/ariana/config ]
+then
+	mkdir -p /etc/ariana
+	echo "Data_Directory=/var/log/dstat" > config
+	echo "HostListFile=hostlist" >> config
+	echo "ariana_agent_path=/usr/local/bin/ariana_agent" >> config
+	echo "Download_url=https://raw.githubusercontent.com/code-post/ariana_agent/master/ariana_agent" >> config
+else
+	source /etc/ariana/config
+fi
 
-Data_Directory=/var/log/dstat
-HostListFile=hostlist
 HostName=$(hostname -s)
 if [ -z $Date ]
 then
 	Date=$(date +%Y-%m-%d)
 fi
+
 dstat_path=$(type -p dstat)
-python_path=$(type -p python)
-ariana_agent_path=/usr/local/bin/ariana_agent
-Download_url=https://raw.githubusercontent.com/code-post/ariana_agent/master/ariana_agent
 
 function update ()
 {
@@ -144,7 +150,7 @@ function running_check ()
         then
         	echo "dstat collected old date. rerunning"
                 echo $Date
-                echo $(ps -ef | grep -v grep | grep $dstat_path | awk '{print $NF}' | awk -F$dstat_path '{print $2}' | awk -F- '{print $2"-"$3"-"$4}' | awk -F. '{print $1}')
+                echo $(ps -ef | grep -v grep | grep $dstat_path | awk '{print $NF}' | awk -F$Data_Directory '{print $2}' | awk -F- '{print $2"-"$3"-"$4}' | awk -F. '{print $1}')
                 stop
 		run
         else

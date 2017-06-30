@@ -227,7 +227,7 @@ function merge ()
 	mv $Data_Directory/$HostName-$Date.csv.temp $Data_Directory/$HostName-$Date.csv
 	exception_check
 	# remove to csv.00 files
-	for i in $(seq 1 $filecount)
+	for i in $(seq 0 $filecount)
 	do
 		if [[ $i = [0-9] ]]
 		then

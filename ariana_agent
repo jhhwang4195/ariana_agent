@@ -144,7 +144,7 @@ function running_check ()
         then
         	echo "dstat collected old date. rerunning"
                 echo $Date
-                echo $(ps -ef | grep -v grep | grep $dstat_path | awk '{print $NF}' | awk -F- '{print $2"-"$3"-"$4}' | awk -F. '{print $1}')
+                echo $(ps -ef | grep -v grep | grep $dstat_path | awk '{print $NF}' | awk -F$dstat_path '{print $2}' | awk -F- '{print $2"-"$3"-"$4}' | awk -F. '{print $1}')
                 stop
 		run
         else

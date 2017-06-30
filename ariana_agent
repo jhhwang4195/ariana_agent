@@ -145,12 +145,13 @@ function run ()
 
 function running_check ()
 {
+	dstat_running_date=$(ps -ef | grep -v grep | grep $dstat_path | awk '{print $NF}' | awk -F$Data_Directory '{print $2}' | awk -F- '{print $2"-"$3"-"$4}' | awk -F. '{print $1}')
 	# compare dstat csv file date 
-	if [ "$Date" != "$(ps -ef | grep -v grep | grep $dstat_path | awk '{print $NF}' | awk -F- '{print $2"-"$3"-"$4}' | awk -F. '{print $1}')" ]
+	if [ "$Date" != "$dstat_running_date" ]
         then
         	echo "dstat collected old date. rerunning"
-                echo $Date
-                echo $(ps -ef | grep -v grep | grep $dstat_path | awk '{print $NF}' | awk -F$Data_Directory '{print $2}' | awk -F- '{print $2"-"$3"-"$4}' | awk -F. '{print $1}')
+                echo "today is "$Date
+		echo "dstat running date is "$dstat_running_date
                 stop
 		run
         else

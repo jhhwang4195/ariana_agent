@@ -33,10 +33,11 @@ fi
 dstat_path=$(type -p dstat)
 python_path=$(type -p python)
 ariana_agent_path=/usr/local/bin/ariana_agent
+Download_url=https://raw.githubusercontent.com/code-post/ariana_agent/master/ariana_agent
 
 function update ()
 {
-	curl -w ' [:: %{size_download} byte has been downloaded ::]\n' -L -# https://raw.githubusercontent.com/code-post/ariana_agent/master/ariana_agent -o /tmp/ariana_agent
+	wget $Download_url -O /tmp/ariana_agent
 	exception_check quiet
 	chmod +x /tmp/ariana_agent 
 	exception_check quiet

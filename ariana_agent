@@ -137,7 +137,7 @@ function run ()
 			mv $Data_Directory/$HostName-$Date.csv $Data_Directory/$HostName-$Date.csv.$filecount
 			exception_check
 		fi
-		dstat --time -v --net --output $Data_Directory/$HostName-$Date.csv > /dev/null &
+		dstat -tvnrpf --output $Data_Directory/$HostName-$Date.csv > /dev/null &
 	else
 		running_check
 	fi

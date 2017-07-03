@@ -137,7 +137,7 @@ function run ()
 			mv $Data_Directory/$HostName-$Date.csv $Data_Directory/$HostName-$Date.csv.$filecount
 			exception_check
 		fi
-		dstat -tvnrpf --output $Data_Directory/$HostName-$Date.csv > /dev/null &
+		dstat -tvnfrs -N $(cat /proc/net/dev |grep -v Inter- | grep -v face | grep -v lo: | sed "s/://"| awk '{printf $1","}')total -C $(cat /proc/cpuinfo  | grep processor  | awk '{printf $3","}')total -D $(lsblk | grep disk | awk '{printf $1","}')total --output $Data_Directory/$HostName-$Date.csv > /dev/null &
 	else
 		running_check
 	fi

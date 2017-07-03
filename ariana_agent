@@ -45,11 +45,17 @@ function update ()
 {
 	curl -w ' [:: %{size_download} byte has been downloaded ::]\n' -L -# $Download_url?$(date +%s) -o /tmp/ariana_agent;
 	exception_check quiet
-	chmod +x /tmp/ariana_agent 
-	exception_check quiet
-	mv -f /tmp/ariana_agent $ariana_agent_path
-	exception_check quiet
-	echo "update done"
+	if [ "$(md5sum /tmp/ariana_agent | awk '{print $1}')" != "$(md5sum $ariana_agent_path | awk '{print $1}')" ]
+	then
+		chmod +x /tmp/ariana_agent 
+		exception_check quiet
+		mv -f /tmp/ariana_agent $ariana_agent_path
+		exception_check quiet
+		echo "update done"
+	else
+		rm -rf /tmp/ariana_agent
+		echo "ariana_agent already up to date"
+	fi
 }
 	
 

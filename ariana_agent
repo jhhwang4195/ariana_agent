@@ -29,7 +29,7 @@ do
 			fi
 		;;
 		m)
-			if [[ $OPTARG == nfs || $OPTARG == rsyslog ]]
+			if [[ "$OPTARG" == "nfs" || "$OPTARG" == "rsyslog" ]]
 			then
 				mode=$OPTARG
 			else
@@ -131,14 +131,14 @@ function env_check ()
 		fi
 	fi
 
-	if [[ $mode == "rsyslog" ]]
+	if [[ "$mode" == "rsyslog" ]]
 	then
 		if [[ -z $rsyslog_server ]]
 		then
 			echo "rsyslog server doesn't define"	
 			exit 1
 		fi
-		if [ $command != "set_server" || $command != "set_config" ]
+		if [ "$command" != "set_server" || "$command" != "set_config" ]
 		then
 			if [ -f /etc/rsyslog.d/ariana_agent.conf || -f /etc/rsyslog.d/ariana_server.conf ] 
 			then
@@ -153,7 +153,7 @@ function env_check ()
 		check_and_install
 	fi
 
-	if [ $command = upload ]
+	if [ "$command" == "upload" ]
 	then
 		if [ -z $upload_filename ]
 		then
@@ -414,6 +414,8 @@ function server_config ()
 	echo "}" >> /etc/rsyslog.d/ariana_server.conf
 	sed -ie "/rsyslog_mode=/d" /etc/ariana/config
 	echo "rsyslog_mode=server" >> /etc/ariana/config
+	service rsyslog restart
+	exception_check
 }
 
 function client_config ()
@@ -436,6 +438,8 @@ function client_config ()
 	echo "local5.debug @@"$rsyslog_server":514" >> /etc/rsyslog.d/ariana_agent.conf
 	sed -ie "/rsyslog_mode=/d" /etc/ariana/config
 	echo "rsyslog_mode=client" >> /etc/ariana/config
+	service rsyslog restart
+	exception_check
 }
 
 function file_upload ()
@@ -455,7 +459,7 @@ case $command in
 		run
 	;;
 	merge)
-		if [ $rsyslog_mode == client ] 
+		if [ "$rsyslog_mode" == "client" ] 
 		then
 			echo "merge command doesn't support rsyslog client mode"	
 			exit 1

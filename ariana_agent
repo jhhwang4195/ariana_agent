@@ -104,12 +104,16 @@ function env_check ()
 		echo $Data_Directory" doesn't exist"
 		exit 1
 	fi
-
-	if [ -z $mode ]
+	
+	if [ $command != "help" ]
 	then
-		echo "ariana_agent mode doesn't define"
-		echo "mode support to nfs or rsyslog."	
-		exit 1
+
+		if [ -z $mode ]
+		then
+			echo "ariana_agent mode doesn't define"
+			echo "mode support to nfs or rsyslog."	
+			exit 1
+		fi
 	fi
 
 	if [[ $mode == "rsyslog" ]]

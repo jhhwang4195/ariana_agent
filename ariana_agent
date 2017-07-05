@@ -4,7 +4,7 @@
 # jaekwon.park@code-post.com
 # https://github.com/code-post/ariana_agent
 
-while getopts "d:s:m:n:" opt
+while getopts "d:s:m:n:h:" opt
 do
 	case $opt in
 		d)
@@ -296,10 +296,7 @@ function run ()
 		then
 			# csv file count
 			filecount=$(ls -alh $Data_Directory| grep $HostName-$Date.csv | wc -l)
-			if [ $filecount -eq 0 ]
-			then
-				filecount=1
-			fi
+			let filecount=$filecount+1
 			# change for matting single number for dual number [0-9] -> [00-99]
 			if [[ $(ls -alh $Data_Directory| grep $HostName-$Data.csv | wc -l) = [0-9] ]]
 			then
@@ -347,21 +344,24 @@ function running_check ()
 
 function merge ()
 {
-	# csv file count
-	filecount=$(ls -alh $Data_Directory | grep $HostName-$Date.csv.'[00-99]' | wc -l)
-	# check for dstat proccess before merge.
-        if [ $(ps -ef | grep -v grep | grep $dstat_path |wc -l) -ne 0 ]
+	if [ "$rsyslog_mode" != "server" ]
 	then
-		echo "dstat already running. check the dstat process."
-		echo "can not be merge to dstat process running"
-		ps -ef | grep -v grep | grep "$dstat_path"
-		exit 0;
-	fi
+		# csv file count
+		filecount=$(ls -alh $Data_Directory | grep $HostName-$Date.csv.'[00-99]' | wc -l)
+		# check for dstat proccess before merge.
+	        if [ $(ps -ef | grep -v grep | grep $dstat_path |wc -l) -ne 0 ]
+		then
+			echo "dstat already running. check the dstat process."
+			echo "can not be merge to dstat process running"
+			ps -ef | grep -v grep | grep "$dstat_path"
+			exit 0;
+		fi
 
-	if [ $filecount -eq 0 ]
-	then
-		echo "no need to merge"
-		exit 0;
+		if [ $filecount -eq 0 ]
+		then
+			echo "no need to merge"
+			exit 0;
+		fi
 	fi
 
 	if [ -f $Data_Directory/$HostName-$Date.csv.temp ]
@@ -385,7 +385,7 @@ function merge ()
 	# make header file for rsyslog server
 	if [ "$rsyslog_mode" == "server" ]
 	then
-		head -n 7 $Data_Directory/$HostName.csv | tail -n 2  > $Data_Directory/$HostName.header
+		head -n 6 $Data_Directory/$HostName.csv | tail -n 2  > $Data_Directory/$HostName.header
 
 	fi
 	# move to data except head and blank line
@@ -425,6 +425,10 @@ function merge ()
 		exception_check
 	done
 	##### csv file merge end #####
+	if [ "$rsyslog_mode" == "server" ]
+	then
+		echo "" > $Data_Directory/$HostName.csv
+	fi
 	logger -p local5.info "[Ariana_status] ariana agent merge "$HostName-$Date".csv"
 }
 

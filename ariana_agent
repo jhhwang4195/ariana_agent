@@ -376,27 +376,35 @@ function merge ()
 		fi
 
   	fi
-
-	echo $Data_Directory"/"$HostName".csv file move to "$Data_Directory"/"$HostName-$Date".csv.00"
-	##### csv file formatting check start #####
-	# remake csv header
-	head -n 7 $Data_Directory/$HostName.csv > $Data_Directory/$HostName-$Date.csv.00
-	exception_check
-	# make header file for rsyslog server
-	if [ "$rsyslog_mode" == "server" ]
+	if [ -e $Data_Directory/$HostName-$Date.csv ]
 	then
-		head -n 6 $Data_Directory/$HostName.csv | tail -n 2  > $Data_Directory/$HostName.header
-
-	fi
-	# move to data except head and blank line
-	cat $Data_Directory/$HostName.csv | sed "/\"/d" | sed "/^\s*$/d" | sort | uniq  >> $Data_Directory/$HostName-$Date.csv.00
-	exception_check
-	##### csv file formatting check end #####
+		echo $Data_Directory"/"$HostName".csv file move to "$Data_Directory"/"$HostName-$Date".csv.00"
+		##### csv file formatting check start #####
+		# remake csv header
+		head -n 7 $Data_Directory/$HostName.csv > $Data_Directory/$HostName-$Date.csv.00
+		exception_check
+		# make header file for rsyslog server
+		if [ "$rsyslog_mode" == "server" ]
+		then
+			head -n 7 $Data_Directory/$HostName.csv | tail -n 2  > $Data_Directory/$HostName.header
+		fi
+		# move to data except head and blank line
+		cat $Data_Directory/$HostName.csv | sed "/\"/d" | sed "/^\s*$/d" | sort | uniq  >> $Data_Directory/$HostName-$Date.csv.00
+		exception_check
+		##### csv file formatting check end #####
+	else
+		head -n 7 $Data_Directory/$HostName-$Date.csv > $Data_Directory/$HostName-$Date.csv.00
+		exception_check
+		if [ "$rsyslog_mode" == "server" ]
+		then
+			head -n 7 $Data_Directory/$HostName-$Date.csv tail -n 2 > $Data_Directory/$HostName-$Date.csv.00
+		fi
+	if
 
 	##### csv file merge start #####
 	# first csv file merge
 	echo $Data_Directory/$HostName-$Date.csv.00" file merged"
-	cat $Data_Directory/$HostName-$Date.csv.00 | sed "/^\s*$/d" | sort | uniq >> $Data_Directory/$HostName-$Date.csv.temp
+	cat $Data_Directory/$HostName-$Date.csv.00 > $Data_Directory/$HostName-$Date.csv.temp
 	exception_check
 	echo "found "$filecount " files"
 	# merge all count csv file
@@ -427,6 +435,10 @@ function merge ()
 	##### csv file merge end #####
 	if [ "$rsyslog_mode" == "server" ]
 	then
+		if [ -e $Data_Directory/$HostName-$Date.csv ]
+		then
+			cat $Data_Directory/$HostName.csv >> $Data_Directory/$HostName-$Date.csv
+		fi
 		echo "" > $Data_Directory/$HostName.csv
 	fi
 	logger -p local5.info "[Ariana_status] ariana agent merge "$HostName-$Date".csv"
@@ -489,6 +501,18 @@ function server_config ()
 	then
 		touch $Data_Directory/$HostListFile
 	fi
+}
+function rsyslog_set()
+{
+	for i in "/var/log/messages" "\-/var/log/syslog"
+        do
+                rsyslog_conf_file=$(grep -R "$i" /etc/rsyslog*  | awk -F: '{print $1}')
+                rsyslog_conf=$(grep -R "$i" /etc/rsyslog*  | awk -F: '{print $2}' | awk '{print $1}' | sed "s/local5.none;local6.none//")
+                rsyslog_log_file=$(grep -R "$i" /etc/rsyslog*  | awk -F: '{print $2}' | awk '{print $2}')
+		rsyslog_conf_number=$(grep -Rn "$i" /etc/rsyslog*  | awk -F: '{print $2}')
+        done
+		sed -i $rsyslog_conf_number"d" $rsyslog_conf_file
+		echo $rsyslog_conf";local5.none;local6.none	"$rsyslog_log_file >> $rsyslog_conf_file
 }
 
 function client_config ()
@@ -573,6 +597,7 @@ case $command in
 		if [ "$mode" == "rsyslog" ]
 		then
 			server_config
+			rsyslog_set
 		else
 			echo "ser_server command doesn't support nfs mode"
 		fi
@@ -581,6 +606,7 @@ case $command in
 		if [ "$mode" == "rsyslog" ]
 		then
 			client_config
+			rsyslog_set
 		else
 			echo "ser_server command doesn't support nfs mode"
 		fi

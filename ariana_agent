@@ -489,7 +489,7 @@ function client_config ()
 		echo "" >> /etc/rsyslog.d/ariana_agent.conf
 		echo "#dstat csv file " >> /etc/rsyslog.d/ariana_agent.conf
 		echo "input(type=\"imfile\"" >> /etc/rsyslog.d/ariana_agent.conf
-		echo "      File=\"/var/log/dstat/node1-2017-07-04.csv\"" >> /etc/rsyslog.d/ariana_agent.conf
+		echo "      File=\"/var/log/dstat/"$HostName".csv\"" >> /etc/rsyslog.d/ariana_agent.conf
 		echo "      Tag=\"Ariana_agent\"" >> /etc/rsyslog.d/ariana_agent.conf
 		echo "      Severity=\"debug\" " >> /etc/rsyslog.d/ariana_agent.conf
 		echo "      Facility=\"local5\")" >> /etc/rsyslog.d/ariana_agent.conf

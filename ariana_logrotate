@@ -18,7 +18,7 @@ do
 	Host_name=$(echo $Last_Message | awk '{print $1}')
 	if [ $(echo $Last_Message | grep "$stop_message" | wc -l ) -eq 1  ] 
 	then
-		ariana_agent -d $Host_name.csv merge		
+		ariana_agent -h $Host_name merge		
   	fi
 	if [ $(echo $Last_Message | grep "$running_message" | wc -l) -eq 1 ]
 	then

@@ -207,8 +207,11 @@ function env_check ()
 
 }
 
-# enviroment check
-env_check
+if [ "$command" != "update" ]
+then
+        # enviroment check
+        env_check
+fi
 
 HostName=$(hostname -s)
 if [ -z $Date ]

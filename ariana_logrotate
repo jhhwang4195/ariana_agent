@@ -8,7 +8,7 @@ then
 	exit 0;
 fi
 
-source etc/ariana/config
+source /etc/ariana/config
 
 while $inotifywait_path -e modify $ariana_status_file
 do

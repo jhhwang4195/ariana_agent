@@ -16,16 +16,16 @@ while $inotifywait_path -e modify $ariana_status_file
 do
 	Last_Message=$(tail -n1 $ariana_status_file)
 	Host_name=$(echo $Last_Message | awk '{print $1}')
-	if [ $(echo $Last_Message | grep $stop_message | wc -l ) -eq 1  ] 
+	if [ $(echo $Last_Message | grep "$stop_message" | wc -l ) -eq 1  ] 
 	then
 		ariana_agent -d $Host_name.csv merge		
   	fi
-	if [ $(echo $Last_Message | grep $running_message | wc -l) -eq 1 ]
+	if [ $(echo $Last_Message | grep "$running_message" | wc -l) -eq 1 ]
 	then
 		if [ $(grep $Host_name $Data_Directory/$HostListFile | wc -l) -eq 0 ]
 	        then
        			echo "Add "$Host_name" to "$HostListFile
-			echo $HostName >> $Data_Directory/$HostListFile
+			echo $Host_name >> $Data_Directory/$HostListFile
 		fi
         fi
 done

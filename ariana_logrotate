@@ -20,7 +20,7 @@ do
   	fi
 	if [ $(echo $Last_Message | grep "araina agent running" | wc -l) -eq 1 ]
 	then
-		if [ $(grep $Host_name $Data_Directory/$HostListFile | wc -l) -eq "0" ]
+		if [ $(grep $Host_name $Data_Directory/$HostListFile | wc -l) -eq 0 ]
 	        then
        			echo "Add "$Host_name" to "$HostListFile
 			echo $HostName >> $Data_Directory/$HostListFile

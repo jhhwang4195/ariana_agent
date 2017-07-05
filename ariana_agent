@@ -13,7 +13,7 @@ do
                                 Date=$OPTARG
 			else
 				echo $OPTARG
-				echo "some paramater mismatch" 
+				echo "some paramater mismatch"
 				exit 1
                         fi
 		;;
@@ -29,12 +29,13 @@ do
 			fi
 		;;
 		m)
-			if [[ "$OPTARG" == "nfs" || "$OPTARG" == "rsyslog" ]]
+			if [ "$OPTARG" == "nfs" ] || [ "$OPTARG" == "rsyslog" ]
 			then
 				mode=$OPTARG
 			else
 				echo $OPTARG
 				echo "mode support only nfs or rsyslog"
+				echo "using -m nfs or -m rsyslog"
 				exit 1
 			fi
 		;;
@@ -45,21 +46,6 @@ do
 done
 shift $(( $OPTIND  -1 ))
 command=$1
-
-function exception_check()
-{
-        if [ $? -eq 0 ]
-        then
-                if [ -z $1 ]
-                then
-                        echo "done"
-                fi
-        else
-                echo "above task return code "$?
-                echo "something wrong"
-                exit 1
-        fi
-}
 
 function print_help()
 {
@@ -81,13 +67,29 @@ function print_help()
         echo " update           ariana agent self update"
         echo " config           ariana configration setup"
         echo " set_server       ariana ariana server setup"
-        echo " set_client       ariana ariana client setup. must know rsyslog server ip"
+        echo "                  set_server command will be download ariana_logrotate. this is include auto upgrade ariana_logrotate"
+        echo " set_client       ariana ariana client setup. must set rsyslog server ip using -s option"
         echo " upload           log file upload directly. This command need to -n option"
         echo ""
         echo "usage example)"
         echo $0 "run"
         echo $0 "merge"
         echo $0 " -n 2017-07-01 merge"
+}
+
+function exception_check()
+{
+        if [ $? -eq 0 ]
+        then
+                if [ -z $1 ]
+                then
+                        echo "done"
+                fi
+        else
+                echo "above task return code "$?
+                echo "something wrong"
+                exit 1
+        fi
 }
 
 function check_and_install ()
@@ -133,13 +135,23 @@ function config_set ()
 	echo "upload_url=http://monitor.gpdp.me/files/upload" >> /etc/ariana/config
 	echo "" >> /etc/ariana/config
 }
-			
+
 if [ ! -e /etc/ariana/config ]
 then
+	if [ -z $mode ]
+        then
+                print_help
+                echo "ariana_agent mode doesn't define"
+                echo "mode support to nfs or rsyslog."
+                exit 1
+        fi
 	config_set
 fi
 
-source /etc/ariana/config
+if [ "$command" != "config" ]
+then
+	source /etc/ariana/config
+fi
 
 function env_check ()
 {
@@ -148,7 +160,7 @@ function env_check ()
 		echo $Data_Directory" doesn't exist"
 		exit 1
 	fi
-	
+
 	if [ "$command" != "help" ]
 	then
 
@@ -156,21 +168,21 @@ function env_check ()
 		then
 			print_help
 			echo "ariana_agent mode doesn't define"
-			echo "mode support to nfs or rsyslog."	
+			echo "mode support to nfs or rsyslog."
 			exit 1
 		fi
 	fi
 
 	if [[ "$mode" == "rsyslog" ]]
 	then
-		if [[ "$command" == "set_client" && -z $rsyslog_server ]]
+                if [ -z $rsyslog_server ] &&  [ "$command" == "nfs" ]
 		then
-			echo "rsyslog server doesn't define"	
+			echo "rsyslog server doesn't define"
 			exit 1
 		fi
-		if [[ "$command" != "set_server" || "$command" != "set_config" ]]
+		if [ "$command" != "set_server" ] && [ "$command" != "set_client" ]
 		then
-			if [[ -f /etc/rsyslog.d/ariana_agent.conf || -f /etc/rsyslog.d/ariana_server.conf ]]
+			if [ -f /etc/rsyslog.d/ariana_agent.conf ] &&  [ -f /etc/rsyslog.d/ariana_server.conf ]
 			then
 				echo "ariana_agent set_server or set_client command first"
 				exit 1
@@ -183,7 +195,7 @@ function env_check ()
 		check_and_install
 	fi
 
-	if [[ "$command" == "upload" ]]
+	if [ "$command" == "upload" ]
 	then
 		if [ -z $upload_filename ]
 		then
@@ -213,7 +225,7 @@ function update ()
 		exception_check quiet
 		if [ "$(md5sum /tmp/ariana_agent | awk '{print $1}')" != "$(md5sum $ariana_agent_path | awk '{print $1}')" ]
 		then
-			chmod +x /tmp/ariana_agent 
+			chmod +x /tmp/ariana_agent
 			exception_check quiet
 			mv -f /tmp/ariana_agent $ariana_agent_path
 			exception_check quiet
@@ -223,7 +235,7 @@ function update ()
 			echo "ariana_agent already up to date"
 		fi
 	else
-		echo "ariana_agent runnig"	
+		echo "ariana_agent runnig"
 	fi
 }
 function download_ariana_logrotate ()
@@ -238,7 +250,7 @@ function download_ariana_logrotate ()
 		exception_check quiet
 		if [ -z $(type -p ariana_logrotate) ]
 		then
-			ariana_logrotate_path=/usr/loca/bin/ariana_logrotate
+			ariana_logrotate_path=/usr/local/bin/ariana_logrotate
 		else
 			ariana_logrotate_path=$(type -p ariana_logrotate)
 		fi
@@ -246,49 +258,16 @@ function download_ariana_logrotate ()
 		then
 			chmod +x /tmp/ariana_logrotate
 			exception_check quiet
-			mv -f /tmp/ariana_logrotate $(type -p ariana_logrotate)
+			mv -f  /tmp/ariana_logrotate $ariana_logrotate_path
 			exception_check quiet
 		else
 			rm -rf /tmp/ariana_agent
 		fi
 }
 
-<<<<<<< HEAD
-=======
-function print_help()
-{
-	echo $0 " [Command]"
-	echo "System Resource collected using dstat"
-	echo "This agnet working for Ubuntu/Debian or RHEL/CentOS"
-	echo ""
-	echo " [option] "
-	echo "  -d 		define date for merge command. default option is today date"
-	echo "  -m 		ariana_agent logging mode. Support nfs and rsyslog. Default is rsyslog"
-	echo "  -s 		set ariana server ip"
-	echo "  -n 		define upload log file name. only using upload command"
-	echo ""
-	echo " [Command] "
-	echo " run 		running dstat"
-	echo " stop	 	stopping dstat"
-	echo " merge		merge dstat csv file."
-	echo " status		show running dstat status"
-	echo " update		ariana agent self update"
-	echo " config		ariana configration setup"
-	echo " set_server	ariana ariana server setup"
-	echo " 			set_server command will be download ariana_logrotate. this is include auto upgrade ariana_logrotate"
-	echo " set_client	ariana ariana client setup. must set rsyslog server ip using -s option"
-	echo " upload		log file upload directly. This command need to -n option"
-	echo ""	
-	echo "usage example)"
-	echo $0 "run"
-	echo $0 "merge"
-	echo $0 " -n 2017-07-01 merge"
-}
-
->>>>>>> 8cb2b804e5c988efa5e35ec36b047d7178c393de
 function run ()
 {
-	if [[ "$rsyslog_mode" == "client" ]]
+	if [ "$rsyslog_mode" == "client" ]
 	then
 		# add hostname to hostlist file
 		if [ $(grep $HostName $Data_Directory/$HostListFile | wc -l) -eq "0" ]
@@ -306,7 +285,7 @@ function run ()
 		then
 			# csv file count
 			filecount=$(ls -alh $Data_Directory| grep $HostName-$Date.csv | wc -l)
-			if [ $filecount -eq 0 ] 
+			if [ $filecount -eq 0 ]
 			then
 				filecount=1
 			fi
@@ -323,9 +302,10 @@ function run ()
 		fi
 		dstat -tvnfrs -N $(cat /proc/net/dev |grep -v Inter- | grep -v face | grep -v lo: | sed "s/://"| awk '{printf $1","}')total -C $(cat /proc/cpuinfo  | grep processor  | awk '{printf $3","}')total -D $(lsblk | grep disk | awk '{printf $1","}')total --output $Data_Directory/$HostName.csv > /dev/null &
 		logger -p local5.info "[Ariana_status] ariana agent running"
-	        if [[ "$rsyslog_mode" == "server" ]]
+	        if [ "$rsyslog_mode" == "server" ]
 	        then
-			ariana_logrotate_run	
+			#ariana_logrotate_run
+			echo "ariana_logrotate_run"
 		fi
 	else
 		running_check
@@ -338,7 +318,7 @@ function running_check ()
 	running_month=$(date -d "$(head -n4  $Data_Directory/$HostName.csv | tail -n1 | awk -F\"Date:\",\" '{print $2}' | awk '{print $2 $1}')" +%m)
 	running_year=$(head -n4  $Data_Directory/$HostName.csv | tail -n1 | awk -F\"Date:\",\" '{print $2}' | awk '{print $3}')
 	dstat_running_date=$running_year-$running_month-$running_day
-	# compare dstat csv file date 
+	# compare dstat csv file date
 	if [ "$Date" != "$dstat_running_date" ]
         then
         	echo "dstat collected old date. rerunning"
@@ -358,7 +338,7 @@ function merge ()
 {
 	# csv file count
 	filecount=$(ls -alh $Data_Directory | grep $HostName-$Date.csv.'[00-99]' | wc -l)
-	# check for dstat proccess before merge. 
+	# check for dstat proccess before merge.
         if [ $(ps -ef | grep -v grep | grep $dstat_path |wc -l) -ne 0 ]
 	then
 		echo "dstat already running. check the dstat process."
@@ -366,44 +346,44 @@ function merge ()
 		ps -ef | grep -v grep | grep "$dstat_path"
 		exit 0;
 	fi
-	
+
 	if [ $filecount -eq 0 ]
 	then
 		echo "no need to merge"
 		exit 0;
 	fi
-	
-	if [ -f $Data_Directory/$HostName-$Date.csv.temp ]		
+
+	if [ -f $Data_Directory/$HostName-$Date.csv.temp ]
   	then
-		if [[ "$(md5sum $Data_Directory/$HostName.csv | awk '{print $1}')" == "$(md5sum $Data_Directory/$HostName-$Date.csv.temp | awk '{print $1}')" ]]
+		if [ "$(md5sum $Data_Directory/$HostName.csv | awk '{print $1}')" == "$(md5sum $Data_Directory/$HostName-$Date.csv.temp | awk '{print $1}')" ]
 		then
-			echo $Data_Directory/$HostName.csv" file already merged"		
-			exit 0;		
-		else		
-			rm -rf $Data_Directory/$HostName-$Date.csv.temp		
-			exception_check		
-		fi		
-		
+			echo $Data_Directory/$HostName.csv" file already merged"
+			exit 0;
+		else
+			rm -rf $Data_Directory/$HostName-$Date.csv.temp
+			exception_check
+		fi
+
   	fi
 
 	echo $Data_Directory"/"$HostName".csv file move to "$Data_Directory"/"$HostName-$Date".csv.00"
 	##### csv file formatting check start #####
-	# remake csv header 
+	# remake csv header
 	head -n 7 $Data_Directory/$HostName.csv > $Data_Directory/$HostName-$Date.csv.00
 	exception_check
 	# make header file for rsyslog server
-	if [[ "$rsyslog_mode" == "server" ]]
+	if [ "$rsyslog_mode" == "server" ]
 	then
 		head -n 7 $Data_Directory/$HostName.csv | tail -n 2  > $Data_Directory/$HostName.header
-		
+
 	fi
 	# move to data except head and blank line
-	cat $Data_Directory/$HostName.csv | sed "/\"/d" | sed "/^\s*$/d" | sort | uniq  >> $Data_Directory/$HostName-$Date.csv.00	
+	cat $Data_Directory/$HostName.csv | sed "/\"/d" | sed "/^\s*$/d" | sort | uniq  >> $Data_Directory/$HostName-$Date.csv.00
 	exception_check
 	##### csv file formatting check end #####
 
 	##### csv file merge start #####
-	# first csv file merge 
+	# first csv file merge
 	echo $Data_Directory/$HostName-$Date.csv.00" file merged"
 	cat $Data_Directory/$HostName-$Date.csv.00 | sed "/^\s*$/d" | sort | uniq >> $Data_Directory/$HostName-$Date.csv.temp
 	exception_check
@@ -440,7 +420,7 @@ function merge ()
 function stop ()
 {
         if [ $(ps -ef | grep -v grep | grep $dstat_path |wc -l) -ne 0 ]
-	then 
+	then
 		pid=$(ps -ef | grep -v grep | grep $dstat_path | awk '{print $2}')
 		echo "dstat running pid "$pid
 		echo "Try stop dstat"
@@ -455,14 +435,14 @@ function stop ()
 
 function status ()
 {
-	
+
         if [ $(ps -ef | grep -v grep | grep $dstat_path |wc -l) -ne 0 ]
 	then
 		pid=$(ps -ef | grep -v grep | grep $dstat_path | awk '{print $2}')
 		echo "dstat running pid "$pid
 		ps -ef | grep -v grep | grep $dstat_path | awk -F--output '{printf "Dstat logging is "$2"\n"}'
 		echo "today's log files is "
-		ls -alh $Data_Directory/$Hostname.csv | awk '{printf "Log file "$9" size is "$5"\n"}'
+		ls -alh $Data_Directory/$HostName.csv | awk '{printf "Log file "$9" size is "$5"\n"}'
 		ls -alh $Data_Directory | grep $HostName-$Date.csv | awk '{printf "Log file "$9" size is "$5"\n"}'
 	else
 		echo "dstat doesn't running"
@@ -472,15 +452,15 @@ function status ()
 
 function server_config ()
 {
-	echo "$ModLoad imtcp" > /etc/rsyslog.d/ariana_server.conf
-	echo "$InputTCPServerRun 514" >> /etc/rsyslog.d/ariana_server.conf
+	echo "\$ModLoad imtcp" > /etc/rsyslog.d/ariana_server.conf
+	echo "\$InputTCPServerRun 514" >> /etc/rsyslog.d/ariana_server.conf
 	echo "" >> /etc/rsyslog.d/ariana_server.conf
-	echo "$template LOG_FILENAME,\"/var/log/dstat/%fromhost-ip%.csv\"" >> /etc/rsyslog.d/ariana_server.conf
-	echo "$template ARIANA_FILENAME,\"/var/log/dstat/ariana_status.log\"" >> /etc/rsyslog.d/ariana_server.conf
-	echo "$template Ariana_agent, \"%msg%\n\"" >> /etc/rsyslog.d/ariana_server.conf
-	echo "$template Ariana_status, \"%fromhost-ip% %msg%\n\"" >> /etc/rsyslog.d/ariana_server.conf
+	echo "\$template LOG_FILENAME,\"/var/log/dstat/%fromhost-ip%.csv\"" >> /etc/rsyslog.d/ariana_server.conf
+	echo "\$template ARIANA_FILENAME,\"/var/log/dstat/ariana_status.log\"" >> /etc/rsyslog.d/ariana_server.conf
+	echo "\$template Ariana_agent, \"%msg%\n\"" >> /etc/rsyslog.d/ariana_server.conf
+	echo "\$template Ariana_status, \"%fromhost-ip% %msg%\n\"" >> /etc/rsyslog.d/ariana_server.conf
 	echo "" >> /etc/rsyslog.d/ariana_server.conf
-	echo "if $msg contains '[Ariana_status]' then {" >> /etc/rsyslog.d/ariana_server.conf
+	echo "if \$msg contains '[Ariana_status]' then {" >> /etc/rsyslog.d/ariana_server.conf
 	echo "	local5.debug ?ARIANA_FILENAME;Ariana_status " >> /etc/rsyslog.d/ariana_server.conf
 	echo "} else { " >> /etc/rsyslog.d/ariana_server.conf
 	echo "	local5.debug ?LOG_FILENAME;Ariana_agent " >> /etc/rsyslog.d/ariana_server.conf
@@ -490,6 +470,10 @@ function server_config ()
 	service rsyslog restart
 	exception_check
 	download_ariana_logrotate
+	if [ ! -e $Data_Directory/$HostListFile ]
+	then
+		touch $Data_Directory/$HostListFile
+	fi
 }
 
 function client_config ()
@@ -523,7 +507,7 @@ function client_config ()
 
 function ariana_logrotate_run()
 {
-	if [ "$rsyslog_mode" == "server" ]	
+	if [ "$rsyslog_mode" == "server" ]
 	then
 		ariana_logrotate_path=$(type -p ariana_logrotate)
 		if [ $(ps -ef | grep  $ariana_logrotate_path | grep -v grep | wc -l) -eq 0 ]
@@ -551,13 +535,9 @@ case $command in
 		run
 	;;
 	merge)
-<<<<<<< HEAD
-		if [[ "$rsyslog_mode" == "client" ]]
-=======
-		if [ "$mode" == "rsyslog" && "$rsyslog_mode" == "client" ] 
->>>>>>> 8cb2b804e5c988efa5e35ec36b047d7178c393de
+		if [ "$mode" == "rsyslog" ] && [ "$rsyslog_mode" == "client" ]
 		then
-			echo "merge command doesn't support rsyslog client mode"	
+			echo "merge command doesn't support rsyslog client mode"
 		else
 			merge
 		fi

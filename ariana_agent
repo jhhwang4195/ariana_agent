@@ -42,6 +42,9 @@ do
 		n)
 			upload_filename=$OPTARG
 		;;
+		h)
+			HostName=$OPTARG
+		;;
 	esac
 done
 shift $(( $OPTIND  -1 ))
@@ -58,6 +61,7 @@ function print_help()
         echo "  -m              ariana_agent logging mode. Support nfs and rsyslog. Default is rsyslog"
         echo "  -s              set ariana server ip"
         echo "  -n              define upload log file name. only using upload command"
+        echo "  -h              define hostname.  default hostname is find localhost hame"
         echo ""
         echo " [Command] "
         echo " run              running dstat"
@@ -213,7 +217,11 @@ then
         env_check
 fi
 
-HostName=$(hostname -s)
+if [ -z $HostName ]
+then
+	HostName=$(hostname -s)
+fi
+
 if [ -z $Date ]
 then
 	Date=$(date +%Y-%m-%d)
@@ -417,7 +425,7 @@ function merge ()
 		exception_check
 	done
 	##### csv file merge end #####
-	logger -p local5.info "[Ariana_status] ariana agent merge "$Hostname-$Date".csv"
+	logger -p local5.info "[Ariana_status] ariana agent merge "$HostName-$Date".csv"
 }
 
 function stop ()

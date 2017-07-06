@@ -507,12 +507,6 @@ function  client_config ()
 		echo "      Tag=\"Ariana_agent\"" >> /etc/rsyslog.d/ariana_agent.conf
 		echo "      Severity=\"debug\" " >> /etc/rsyslog.d/ariana_agent.conf
 		echo "      Facility=\"local5\")" >> /etc/rsyslog.d/ariana_agent.conf
-		echo "#ariana staus file " >> /etc/rsyslog.d/ariana_agent.conf
-		echo "input (type=\"imfile\"" >> /etc/rsyslog.d/ariana_agent.conf
-		echo "      file=\"/var/log/ariana_status.log\"" >> /etc/rsyslog.d/ariana_agent.conf
-		echo "      Tag=\"Ariana_status\"" >> /etc/rsyslog.d/ariana_agent.conf
-		echo "      Severity=\"debug\" " >> /etc/rsyslog.d/ariana_agent.conf
-		echo "      Facility=\"local5\")" >> /etc/rsyslog.d/ariana_agent.conf
 		echo "" >> /etc/rsyslog.d/ariana_agent.conf
 		echo "local5.debug @@"$rsyslog_server":514" >> /etc/rsyslog.d/ariana_agent.conf
 		sed -i "/rsyslog_mode=/d" /etc/ariana/config

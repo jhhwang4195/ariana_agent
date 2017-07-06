@@ -299,7 +299,7 @@ function run ()
 		dstat -tvnfrs -N $(cat /proc/net/dev |grep -v Inter- | grep -v face | grep -v lo: | sed "s/://"| awk '{printf $1","}')total -C $(cat /proc/cpuinfo  | grep processor  | awk '{printf $3","}')total -D $(lsblk | grep disk | awk '{printf $1","}')total --output $Data_Directory/$HostName.csv > /dev/null &
 		if [ "$mode" == "server" ]
 		then
-			logger -p local5.info "[Ariana_status] ariana agent running"
+			logger -p local5.debug "[Ariana_status] ariana agent running"
 		fi
 	else
 		running_check
@@ -407,7 +407,7 @@ function merge ()
 	##### csv file merge end #####
 	if [ "$mode" == "server" ]
 	then
-		logger -p local5.info "[Ariana_status] ariana agent merged to "$HostName-$Date".csv"
+		logger -p local5.debug "[Ariana_status] ariana agent merged to "$HostName-$Date".csv"
 	fi
 }
 
@@ -423,7 +423,7 @@ function stop ()
 
 		if [ "$mode" == "server" ]
 		then
-			logger -p local5.info "[Ariana_status] ariana agent stopped"
+			logger -p local5.debug "[Ariana_status] ariana agent stopped"
 		fi
 	else
 		echo "can't find dstat process"
@@ -546,12 +546,12 @@ function file_upload ()
 		curl -i -F filedata=@$upload_filename $upload_url
 		if [ "$mode" == "server" ]
 		then
-			logger -p local5.info "[Ariana_status] ariana agent upload "$HostName-$Date".csv to "$upload_url
+			logger -p local5.debug "[Ariana_status] ariana agent upload "$HostName-$Date".csv to "$upload_url
 		fi
 	else
 		if [ "$mode" == "server" ]
 		then
-			logger -p local5.info "[Ariana_status] ariana agent upload failed. "$HostName-$Date".csv is not exist"
+			logger -p local5.debug "[Ariana_status] ariana agent upload failed. "$HostName-$Date".csv is not exist"
 		else
 			echo $upload_filename" is not exist"
 		fi

@@ -12,7 +12,7 @@ then
         exit 0;
 fi
 
-if [ ! -e $ariana_status_file]
+if [ ! -e $ariana_status_file ]
 then
         touch $ariana_status_file
         chmod 766 $ariana_status_file

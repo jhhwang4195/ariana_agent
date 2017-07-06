@@ -265,6 +265,7 @@ function download_ariana_logrotate ()
 
 function run ()
 {
+	Date=$(date +%Y-%m-%d)
 	if [ "$rsyslog_mode" == "client" ]
 	then
 		# add hostname to hostlist file

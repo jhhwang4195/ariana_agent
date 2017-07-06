@@ -488,7 +488,7 @@ function rsyslog_set()
 		echo $rsyslog_conf";local5.none;local6.none	"$rsyslog_log_file >> $rsyslog_conf_file
 }
 
-functio  client_config ()
+function  client_config ()
 {
 	if [ -z $rsyslog_server ]
 	then

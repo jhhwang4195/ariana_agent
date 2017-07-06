@@ -210,7 +210,7 @@ fi
 
 if [ -z $Date ]
 then
-#	Date=$(date +%Y-%m-%d)
+#	Date=$(%Y-%m-%d)
 	Date=$(date -d "yesterday" +%Y-%m-%d)
 fi
 
@@ -311,6 +311,7 @@ function running_check ()
 	running_month=$(date -d "$(head -n4  $Data_Directory/$HostName.csv | tail -n1 | awk -F\"Date:\",\" '{print $2}' | awk '{print $2 $1}')" +%m)
 	running_year=$(head -n4  $Data_Directory/$HostName.csv | tail -n1 | awk -F\"Date:\",\" '{print $2}' | awk '{print $3}')
 	dstat_running_date=$running_year-$running_month-$running_day
+	Date=$(date +%Y-%m-%d)
 	# compare dstat csv file date
 	if [ "$Date" != "$dstat_running_date" ]
         then

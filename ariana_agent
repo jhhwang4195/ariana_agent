@@ -140,7 +140,12 @@ function config_set ()
 	if [ -n $mode ]
 	then
 		sed -i "/mode=/d" /etc/ariana/config
-		echo "mode=standalone"$mode" # work mode support to standalone or server. Default mode is standalone" >> /etc/ariana/config
+		echo "mode="$mode" # work mode support to standalone or server. Default mode is standalone" >> /etc/ariana/config
+	fi
+	if [ -z $mode ]
+	then
+		sed -i "/mode=/d" /etc/ariana/config
+		echo "mode=standalone # work mode support to standalone or server. Default mode is standalone" >> /etc/ariana/config
 	fi
 	if [ -n $rsyslog_server ]
 	then
@@ -162,11 +167,6 @@ then
                 exit 1
         fi
 	config_set
-fi
-
-if [ "$command" != "config" ]
-then
-	source /etc/ariana/config
 fi
 
 function env_check ()
@@ -193,10 +193,14 @@ function env_check ()
 	fi
 }
 
-if [ "$command" != "update" ]
+if [ "$command" != "config" ]
 then
+	source /etc/ariana/config
+	if [ "$command" != "update" ]
+	then
         # enviroment check
-        env_check
+        	env_check
+	fi
 fi
 
 if [ -z $HostName ]
@@ -463,9 +467,8 @@ function server_config ()
 	echo "rsyslog_mode=server" >> /etc/ariana/config
         sed -i "/rsyslog_server=/d" /etc/ariana/config
         echo "rsyslog_server="$get_first_nic_ip >> /etc/ariana/config
-	echo "rsyslog_server ip set"$get_first_nic_ip" from nic is "$get_first_nic_name
-	echo "if you want modify server ip. using  -s option and config command."
-	echo "or modify your self rsyslog_server to /etc/ariana/config."
+	echo "rsyslog_server ip set ["$get_first_nic_ip"] from nic is "$get_first_nic_name
+	echo "if you want modify server ip. using  -s option and config command. or modify your self rsyslog_server to /etc/ariana/config."
 	service rsyslog restart
 	exception_check
 	download_ariana_logrotate
@@ -587,7 +590,7 @@ case $command in
 			server_config
 			rsyslog_set
 		else
-			echo "ser_server command doesn't support standalone mode"
+			echo "set_server command doesn't support standalone mode"
 		fi
 	;;
 	set_client)
@@ -596,7 +599,7 @@ case $command in
 			client_config
 			rsyslog_set
 		else
-			echo "ser_server command doesn't support standalone mode"
+			echo "set_server command doesn't support standalone mode"
 		fi
 	;;
 	upload)

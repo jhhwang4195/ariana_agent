@@ -1,31 +1,40 @@
 #!/bin/bash
 
-ariana_status_file=/var/log/dstat/ariana_status.log
+source /etc/ariana/config
+
+ariana_status_file=$rsyslog_Data_Directory/ariana_status.log
 inotifywait_path=$(type -p inotifywait)
 stop_message="ariana agent stopped"
 running_message="ariana agent running"
 if [ -z $inotifywait_path ]
 then
-	echo "need to inotify-tools package"
-	exit 0;
+        echo "need to inotify-tools package"
+        exit 0;
 fi
-
-source /etc/ariana/config
 
 while $inotifywait_path -e modify $ariana_status_file
 do
-	Last_Message=$(tail -n1 $ariana_status_file)
-	Host_name=$(echo $Last_Message | awk '{print $1}')
-	if [ $(echo $Last_Message | grep "$stop_message" | wc -l ) -eq 1  ] 
-	then
-		ariana_agent -h $Host_name merge		
-  	fi
-	if [ $(echo $Last_Message | grep "$running_message" | wc -l) -eq 1 ]
-	then
-		if [ $(grep $Host_name $Data_Directory/$HostListFile | wc -l) -eq 0 ]
-	        then
-       			echo "Add "$Host_name" to "$HostListFile
-			echo $Host_name >> $Data_Directory/$HostListFile
-		fi
+        Last_Message=$(tail -n1 $ariana_status_file)
+        Host_name=$(echo $Last_Message | awk '{print $1}')
+        if [ $(echo $Last_Message | grep "$stop_message" | wc -l ) -eq 1  ]
+        then
+                #ariana_agent -h $Host_name merge
+                echo "" > $rsyslog_Data_Directory/$Host_name.csv
+                invoke-rc.d rsyslog rotate > /dev/null
+        fi
+        if [ $(echo $Last_Message | grep "$running_message" | wc -l) -eq 1 ]
+        then
+                if [ $(grep $Host_name $rsyslog_Data_Directory/$HostListFile | wc -l) -eq 0 ]
+                then
+                        echo "Add "$Host_name" to "$HostListFile
+                        echo $Host_name >> $rsyslog_Data_Directory/$HostListFile
+                fi
+                #if [ ! -e $rsyslog_Data_Directory/$Host_name.csv ]
+                #then
+                #       touch $rsyslog_Data_Directory/$Host_name.csv
+                #fi
+                head -n 6 $rsyslog_Data_Directory/$Host_name.csv | tail -n 2 > $rsyslog_Data_Directory/$Host_name.header
+                sed -i "/\"/d" $rsyslog_Data_Directory/$Host_name.csv
+                sed -i "/^\s*$/d" $rsyslog_Data_Directory/$Host_name.csv
         fi
 done

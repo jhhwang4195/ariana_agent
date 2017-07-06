@@ -286,7 +286,7 @@ function run ()
 			filecount=$(ls -alh $Data_Directory| grep $HostName-$Date.csv | wc -l)
 			let filecount=$filecount+1
 			# change for matting single number for dual number [0-9] -> [00-99]
-			if [[ $(ls -alh $Data_Directory| grep $HostName-$Date.csv | wc -l) -lt "10" ]]
+			if [[ $(ls -alh $Data_Directory| grep $HostName-$Date.csv | wc -l) -lt "9" ]]
 			then
 				filecount=0$filecount
 			fi

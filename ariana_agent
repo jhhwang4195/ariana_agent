@@ -485,7 +485,7 @@ function rsyslog_set()
 	for i in "/var/log/messages" "\-/var/log/syslog"
         do
                 rsyslog_conf_file=$(grep -R "$i" /etc/rsyslog*  | awk -F: '{print $1}')
-                rsyslog_conf=$(grep -R "$i" /etc/rsyslog*  | awk -F: '{print $2}' | awk '{print $1}' | sed "s/local5.none;local6.none//")
+                rsyslog_conf=$(grep -R "$i" /etc/rsyslog*  | awk -F: '{print $2}' | awk '{print $1}' | sed "s/;local5.none;local6.none//")
                 rsyslog_log_file=$(grep -R "$i" /etc/rsyslog*  | awk -F: '{print $2}' | awk '{print $2}')
 		rsyslog_conf_number=$(grep -Rn "$i" /etc/rsyslog*  | awk -F: '{print $2}')
         done

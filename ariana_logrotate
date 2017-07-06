@@ -20,6 +20,7 @@ do
         then
                 #ariana_agent -h $Host_name merge
                 echo "" > $rsyslog_Data_Directory/$Host_name.csv
+                chmod 655 $rsyslog_Data_Directory/$Host_name.csv
                 invoke-rc.d rsyslog rotate > /dev/null
         fi
         if [ $(echo $Last_Message | grep "$running_message" | wc -l) -eq 1 ]
@@ -33,7 +34,7 @@ do
                 #then
                 #       touch $rsyslog_Data_Directory/$Host_name.csv
                 #fi
-                head -n 6 $rsyslog_Data_Directory/$Host_name.csv | tail -n 2 > $rsyslog_Data_Directory/$Host_name.header
+                head -n 6 $rsyslog_Data_Directory/$Host_name.csv | tail -n 2 > $rsyslog_Data_Directory/$Host_name.header.csv
                 sed -i "/\"/d" $rsyslog_Data_Directory/$Host_name.csv
                 sed -i "/^\s*$/d" $rsyslog_Data_Directory/$Host_name.csv
         fi

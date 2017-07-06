@@ -20,7 +20,7 @@ do
         then
                 #ariana_agent -h $Host_name merge
                 echo "" > $rsyslog_Data_Directory/$Host_name.csv
-                chmod 655 $rsyslog_Data_Directory/$Host_name.csv
+                chmod 766 $rsyslog_Data_Directory/$Host_name.csv
                 invoke-rc.d rsyslog rotate > /dev/null
         fi
         if [ $(echo $Last_Message | grep "$running_message" | wc -l) -eq 1 ]

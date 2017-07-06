@@ -132,8 +132,8 @@ function config_set ()
 	then
 		mkdir -p /etc/ariana
 	fi
-	echo "Data_Directory=/data/volume/nfs/docker-data/dstat2graph/data" > /etc/ariana/config
-	echo "rsyslog_Data_Directory=/var/log/dstat" >> /etc/ariana/config
+	echo "Data_Directory=/var/log/dstat" > /etc/ariana/config
+	echo "rsyslog_Data_Directory=/data/volume/nfs/docker-data/dstat2graph/data" >> /etc/ariana/config
 	echo "HostListFile=hostlist" >> /etc/ariana/config
 	echo "ariana_agent_path=/usr/local/bin/ariana_agent" >> /etc/ariana/config
 	echo "Download_url=https://raw.githubusercontent.com/code-post/ariana_agent/master/ariana_agent" >> /etc/ariana/config
@@ -509,7 +509,7 @@ function  client_config ()
 		echo "      Facility=\"local5\")" >> /etc/rsyslog.d/ariana_agent.conf
 		echo "#ariana staus file " >> /etc/rsyslog.d/ariana_agent.conf
 		echo "input (type=\"imfile\"" >> /etc/rsyslog.d/ariana_agent.conf
-		echo "      file=\""$Data_Directory"/ariana_status.log\"" >> /etc/rsyslog.d/ariana_agent.conf
+		echo "      file=\"/var/log/ariana_status.log\"" >> /etc/rsyslog.d/ariana_agent.conf
 		echo "      Tag=\"Ariana_status\"" >> /etc/rsyslog.d/ariana_agent.conf
 		echo "      Severity=\"debug\" " >> /etc/rsyslog.d/ariana_agent.conf
 		echo "      Facility=\"local5\")" >> /etc/rsyslog.d/ariana_agent.conf
@@ -528,14 +528,14 @@ function  client_config ()
 
 function ariana_logrotate_run()
 {
-	if [ "$rsyslog_mode" == "server" ]
+	ariana_logrotate_path=$(type -p ariana_logrotate)
+	if [ $(ps -ef | grep  $ariana_logrotate_path | grep -v grep | wc -l) -eq 0 ]
 	then
-		ariana_logrotate_path=$(type -p ariana_logrotate)
-		if [ $(ps -ef | grep  $ariana_logrotate_path | grep -v grep | wc -l) -eq 0 ]
-		then
-			$ariana_logrotate_path > /dev/null &
-			exception_check
-		fi
+		$ariana_logrotate_path > /dev/null &
+		exception_check
+	else
+		ps -ef | grep  $ariana_logrotate_path | grep -v grep
+		echo "ariana_logrotate running."
 	fi
 }
 
@@ -587,7 +587,7 @@ case $command in
 	set_server)
 		if [ "$mode" == "server" ]
 		then
-			client_config
+		#	client_config
 			server_config
 			rsyslog_set
 		else
@@ -607,7 +607,13 @@ case $command in
 		file_upload
 	;;
 	server_run)
-		ariana_logrotate_run
+
+		if [ "$rsyslog_mode" == "server" ]
+		then
+			ariana_logrotate_run
+		else
+			echo "server_run command doesn't support standalone mode"
+		fi
 	;;
 	*)
 		print_help

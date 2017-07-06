@@ -517,7 +517,7 @@ function  client_config ()
 		sed -i "/ariana_agent/d" /etc/crontab
 		echo "0 0 * * * root /usr/local/bin/ariana_agent stop;/usr/local/bin/ariana_agent merge;/usr/local/bin/ariana_agent run;" >> /etc/crontab
 		# random upload time between 00h 01m to 00h 59m
-		echo "(expr $RANDOM % 59) 0 * * * root /usr/local/bin/ariana_agent upload ">> /etc/crontab
+		echo "$(expr $RANDOM % 59) 0 * * * root /usr/local/bin/ariana_agent upload ">> /etc/crontab
 	fi
 }
 

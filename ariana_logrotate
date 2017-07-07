@@ -34,7 +34,8 @@ do
         if [ $(echo $Last_Message | grep "$running_message" | wc -l) -eq 1 ]
         then
                 echo "" > $rsyslog_Data_Directory/$Host_name.csv
-                invoke-rc.d rsyslog rotate > /dev/null
+		sed -i "/^\s*$/d" $rsyslog_Data_Directory/$Host_name.csv
+		invoke-rc.d rsyslog rotate > /dev/null
                 if [ $(grep $Host_name $rsyslog_Data_Directory/$HostListFile | wc -l) -eq 0 ]
                 then
                         echo "Add "$Host_name" to "$HostListFile
@@ -42,6 +43,5 @@ do
                 fi
 		sleep 5
                 tail -n 2 $rsyslog_Data_Directory/$Host_name.header > $rsyslog_Data_Directory/$Host_name.header.csv
-		sed -i "/^\s*$/d" $rsyslog_Data_Directory/$Host_name.csv
         fi
 done

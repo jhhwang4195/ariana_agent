@@ -42,5 +42,6 @@ do
                 fi
 		sleep 5
                 tail -n 2 $rsyslog_Data_Directory/$Host_name.header > $rsyslog_Data_Directory/$Host_name.header.csv
+		sed -i "/^\s*$/d" $rsyslog_Data_Directory/$Host_name.csv
         fi
 done

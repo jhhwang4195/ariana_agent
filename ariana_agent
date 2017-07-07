@@ -455,15 +455,19 @@ function server_config ()
 	echo "\$ModLoad imtcp" > /etc/rsyslog.d/ariana_server.conf
 	echo "\$InputTCPServerRun 514" >> /etc/rsyslog.d/ariana_server.conf
 	echo "" >> /etc/rsyslog.d/ariana_server.conf
-	echo "\$template LOG_FILENAME,\"$rsyslog_Data_Directory/%fromhost-ip%.csv\"" >> /etc/rsyslog.d/ariana_server.conf
-	echo "\$template ARIANA_FILENAME,\"$rsyslog_Data_Directory/ariana_status.log\"" >> /etc/rsyslog.d/ariana_server.conf
-	echo "\$template Ariana_agent, \"%msg%\n\"" >> /etc/rsyslog.d/ariana_server.conf
-	echo "\$template Ariana_status, \"%fromhost-ip% %msg%\n\"" >> /etc/rsyslog.d/ariana_server.conf
+	echo "\$template LOG_FILENAME,\"/data/volume/nfs/docker-data/dstat2graph/data/%fromhost-ip%.csv\"" >> /etc/rsyslog.d/ariana_server.conf
+	echo "\$template LOG_HEADER_FILENAME,\"/data/volume/nfs/docker-data/dstat2graph/data/%fromhost-ip%.header\" >> /etc/rsyslog.d/ariana_server.conf
+	echo "\$template ARIANA_FILENAME,\"/data/volume/nfs/docker-data/dstat2graph/data/ariana_status.log\" >> /etc/rsyslog.d/ariana_server.conf
+	echo "\$template Ariana_agent, \"%msg%\n\" >> /etc/rsyslog.d/ariana_server.conf
+	echo "\$template Ariana_status, \"%fromhost-ip% %msg%\n\" >> /etc/rsyslog.d/ariana_server.conf
 	echo "" >> /etc/rsyslog.d/ariana_server.conf
-	echo "if \$msg contains '[Ariana_status]' then {" >> /etc/rsyslog.d/ariana_server.conf
-	echo "	local5.debug ?ARIANA_FILENAME;Ariana_status " >> /etc/rsyslog.d/ariana_server.conf
-	echo "} else { " >> /etc/rsyslog.d/ariana_server.conf
-	echo "	local5.debug ?LOG_FILENAME;Ariana_agent " >> /etc/rsyslog.d/ariana_server.conf
+	echo "if $msg contains '[Ariana_status]' then {" >> /etc/rsyslog.d/ariana_server.conf
+	echo "	local5.debug ?ARIANA_FILENAME;Ariana_status" >> /etc/rsyslog.d/ariana_server.conf
+	echo "} else {" >> /etc/rsyslog.d/ariana_server.conf
+	echo "	if $msg contains '\"' then" >> /etc/rsyslog.d/ariana_server.conf
+	echo "		local5.debug ?LOG_HEADER_FILENAME;Ariana_agent" >>  /etc/rsyslog.d/ariana_server.conf
+	echo "	else" >> /etc/rsyslog.d/ariana_server.conf
+	echo "		local5.debug ?LOG_FILENAME;Ariana_agent" >> /etc/rsyslog.d/ariana_server.conf
 	echo "}" >> /etc/rsyslog.d/ariana_server.conf
 	sed -i "/rsyslog_mode=/d" /etc/ariana/config
 	echo "rsyslog_mode=server" >> /etc/ariana/config

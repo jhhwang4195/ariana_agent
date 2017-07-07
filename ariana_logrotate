@@ -26,22 +26,21 @@ do
         then
                 #ariana_agent -h $Host_name merge
                 echo "" > $rsyslog_Data_Directory/$Host_name.csv
+		echo "" > $rsyslog_Data_Directory/$Host_name.header
+                chmod 766 $rsyslog_Data_Directory/$Host_name.header
                 chmod 766 $rsyslog_Data_Directory/$Host_name.csv
                 invoke-rc.d rsyslog rotate > /dev/null
         fi
         if [ $(echo $Last_Message | grep "$running_message" | wc -l) -eq 1 ]
         then
+                echo "" > $rsyslog_Data_Directory/$Host_name.csv
+                invoke-rc.d rsyslog rotate > /dev/null
                 if [ $(grep $Host_name $rsyslog_Data_Directory/$HostListFile | wc -l) -eq 0 ]
                 then
                         echo "Add "$Host_name" to "$HostListFile
                         echo $Host_name >> $rsyslog_Data_Directory/$HostListFile
                 fi
-                #if [ ! -e $rsyslog_Data_Directory/$Host_name.csv ]
-                #then
-                #       touch $rsyslog_Data_Directory/$Host_name.csv
-                #fi
-                head -n 6 $rsyslog_Data_Directory/$Host_name.csv | tail -n 2 > $rsyslog_Data_Directory/$Host_name.header.csv
-                sed -i "/\"/d" $rsyslog_Data_Directory/$Host_name.csv
-                sed -i "/^\s*$/d" $rsyslog_Data_Directory/$Host_name.csv
+		sleep 5
+                tail -n 2 $rsyslog_Data_Directory/$Host_name.header > $rsyslog_Data_Directory/$Host_name.header.csv
         fi
 done

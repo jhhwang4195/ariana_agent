@@ -179,7 +179,7 @@ function env_check ()
 
 	if [ -z $upload_filename ]
 	then
-		upload_filename=$hostname-$Date.csv
+		upload_filename=$HostName-$Date.csv
 	fi
 
 	if [ -z $dstat_path ]
@@ -193,15 +193,6 @@ function env_check ()
 	fi
 }
 
-if [ "$command" != "config" ]
-then
-	source /etc/ariana/config
-	if [ "$command" != "update" ]
-	then
-        # enviroment check
-        	env_check
-	fi
-fi
 
 if [ -z $HostName ]
 then
@@ -212,6 +203,16 @@ if [ -z $Date ]
 then
 #	Date=$(%Y-%m-%d)
 	Date=$(date -d "yesterday" +%Y-%m-%d)
+fi
+
+if [ "$command" != "config" ]
+then
+	source /etc/ariana/config
+	if [ "$command" != "update" ]
+	then
+        # enviroment check
+        	env_check
+	fi
 fi
 
 function update ()

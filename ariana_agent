@@ -546,17 +546,17 @@ function file_upload ()
 		echo "upload url empty. define upload url"
 		exit 1
 	fi
-	if [ -f $upload_filename ]
+	if [ -f $Data_Directory/$upload_filename ]
 	then
-		curl -i -F filedata=@$upload_filename $upload_url
+		curl -i -F filedata=@$Data_Directory/$upload_filename $upload_url
 		if [ "$mode" == "server" ]
 		then
-			logger -p local5.debug "[Ariana_status] ariana agent upload "$HostName-$Date".csv to "$upload_url
+			logger -p local5.debug "[Ariana_status] ariana agent upload "$upload_filename".csv to "$upload_url
 		fi
 	else
 		if [ "$mode" == "server" ]
 		then
-			logger -p local5.debug "[Ariana_status] ariana agent upload failed. "$HostName-$Date".csv is not exist"
+			logger -p local5.debug "[Ariana_status] ariana agent upload failed. "$upload_filename".csv is not exist"
 		else
 			echo $upload_filename" is not exist"
 		fi
